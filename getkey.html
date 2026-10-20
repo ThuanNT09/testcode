@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Nhận Key Thành Công - TMOD System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: rgba(18, 22, 34, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --primary: #00f2fe;
+      --btn-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #7000ff 100%);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --success: #10b981;
+      --shadow-neon: 0 0 25px rgba(0, 242, 254, 0.35);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-dark);
+      color: var(--text-main); min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; padding: 20px; position: relative; overflow-x: hidden;
+    }
+    .cyber-grid {
+      position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 40px 40px; z-index: 0; pointer-events: none;
+    }
+    .card-box {
+      position: relative; z-index: 2; background: var(--bg-card);
+      backdrop-filter: blur(24px); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 30px 24px; max-width: 450px;
+      width: 100%; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); text-align: center;
+    }
+    .card-box::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--btn-gradient);
+    }
+    .success-icon {
+      width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.15);
+      border: 2px solid var(--success); color: var(--success); display: flex; align-items: center;
+      justify-content: center; font-size: 26px; margin: 0 auto 16px; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+    h2 { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    p { font-size: 13px; color: var(--text-sub); margin-bottom: 20px; line-height: 1.4; }
+    .key-display {
+      background: rgba(0, 0, 0, 0.5); border: 1px dashed rgba(0, 242, 254, 0.4);
+      border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px; word-break: break-all;
+    }
+    .key-val {
+      font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 900;
+      color: var(--primary); text-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+    }
+    .btn-action {
+      width: 100%; background: var(--btn-gradient); color: #fff; border: none;
+      border-radius: var(--radius-sm); padding: 13px; font-size: 14px; font-weight: 800;
+      letter-spacing: 0.8px; cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; gap: 8px; text-transform: uppercase; box-shadow: 0 8px 20px rgba(0, 242, 254, 0.3);
+      transition: all 0.25s ease; text-decoration: none; margin-bottom: 10px;
+    }
+    .btn-action:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(0, 242, 254, 0.5); }
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--success); color: #000; font-weight: 800; padding: 10px 20px;
+      border-radius: 8px; transition: transform 0.3s ease; z-index: 100; font-size: 13px;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="cyber-grid"></div>
+  <div class="card-box">
+    <div class="success-icon"><i class="fa-solid fa-check"></i></div>
+    <h2>VƯỢT LINK THÀNH CÔNG</h2>
+    <p>Mã key của bạn đã sẵn sàng. Hãy bấm sao chép và dán vào ô xác thực nhé.</p>
+
+    <div class="key-display">
+      <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 4px; text-transform: uppercase;">Mã Key Của Bạn:</div>
+      <div class="key-val" id="keyDisplayVal">Đang tải...</div>
+    </div>
+
+    <button class="btn-action" id="copyBtn">
+      <i class="fa-regular fa-copy"></i> Sao Chép Key Ngay
+    </button>
+  </div>
+
+  <div class="toast" id="toast">Đã sao chép Key vào bộ nhớ tạm!</div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const keyVal = urlParams.get('key') || 'VIP-DEMO-KEY';
+    document.getElementById('keyDisplayVal').textContent = keyVal;
+
+    const copyBtn = document.getElementById('copyBtn');
+    const toast = document.getElementById('toast');
+
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(keyVal).then(() => {
+        toast.classList.add('show');
+        copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Đã Sao Chép!';
+        setTimeout(() => {
+          toast.classList.remove('show');
+          copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Sao Chép Key Ngay';
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>

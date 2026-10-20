@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Xác Thực Lấy Key - TMOD System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: rgba(18, 22, 34, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --primary: #00f2fe;
+      --btn-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #7000ff 100%);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --shadow-neon: 0 0 25px rgba(0, 242, 254, 0.35);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-dark);
+      color: var(--text-main); min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; padding: 20px; position: relative; overflow-x: hidden;
+    }
+    .cyber-grid {
+      position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 40px 40px; z-index: 0; pointer-events: none;
+    }
+    .card-box {
+      position: relative; z-index: 2; background: var(--bg-card);
+      backdrop-filter: blur(24px); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 30px 24px; max-width: 450px;
+      width: 100%; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); text-align: center;
+    }
+    .card-box::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--btn-gradient);
+    }
+    h2 { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    p { font-size: 13px; color: var(--text-sub); margin-bottom: 20px; line-height: 1.4; }
+    .step-section {
+      background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px; text-align: left;
+    }
+    .step-section label { font-size: 12px; font-weight: 700; color: var(--primary); display: block; margin-bottom: 8px; text-transform: uppercase; }
+    .btn-action {
+      width: 100%; background: var(--btn-gradient); color: #fff; border: none;
+      border-radius: var(--radius-sm); padding: 13px; font-size: 14px; font-weight: 800;
+      letter-spacing: 0.8px; cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; gap: 8px; text-transform: uppercase; box-shadow: 0 8px 20px rgba(0, 242, 254, 0.3);
+      transition: all 0.25s ease; text-decoration: none;
+    }
+    .btn-action:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(0, 242, 254, 0.5); }
+    input {
+      width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm); padding: 12px; color: #fff; font-size: 14px;
+      outline: none; text-align: center; margin-bottom: 10px; font-family: 'Orbitron', monospace;
+    }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 242, 254, 0.2); }
+    .error-msg { color: var(--danger); font-size: 12px; margin-bottom: 10px; display: none; font-weight: 600; }
+    .success-box { display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px; }
+    .back-link { display: inline-block; margin-top: 15px; color: var(--text-sub); text-decoration: none; font-size: 13px; font-weight: 600; }
+    .back-link:hover { color: var(--primary); }
+  </style>
+</head>
+<body>
+  <div class="cyber-grid"></div>
+  <div class="card-box">
+    <h2 id="addonTitle">Tải Addon</h2>
+    <p>Hoàn thành vượt link để lấy mã key xác thực tải file.</p>
+
+    <!-- Khu vực nhập/lấy key -->
+    <div id="authArea">
+      <div class="step-section">
+        <label>Bước 1: Lấy mã Key</label>
+        <button class="btn-action" onclick="goToGetLink()">
+          <i class="fa-solid fa-key"></i> Lấy Key Miễn Phí Ngay
+        </button>
+      </div>
+
+      <div class="step-section">
+        <label>Bước 2: Nhập Key & Tải</label>
+        <input type="text" id="inputKey" placeholder="Dán mã key vào đây..." autocomplete="off">
+        <div class="error-msg" id="errorMsg">Mã Key không chính xác hoặc đã hết hạn!</div>
+        <button class="btn-action" onclick="verifyKey()">
+          <i class="fa-solid fa-shield-check"></i> Xác Thực & Mở Khóa Link
+        </button>
+      </div>
+    </div>
+
+    <!-- Khu vực tải thành công -->
+    <div class="success-box" id="successBox">
+      <p style="color: var(--success); font-weight: 800; margin-bottom: 12px;"><i class="fa-solid fa-circle-check"></i> XÁC THỰC THÀNH CÔNG!</p>
+      <a href="#" id="downloadBtn" class="btn-action" download>
+        <i class="fa-solid fa-download"></i> Tải File Addon (.mcpack)
+      </a>
+    </div>
+
+    <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Quay lại trang chủ</a>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const addonId = urlParams.get('id') || 'default';
+    const addonName = urlParams.get('name') || 'Addon Minecraft';
+    
+    document.getElementById('addonTitle').textContent = addonName;
+
+    // Link file thực tế của từng addon trên GitHub
+    const downloadLinks = {
+      'furniture': 'downloads/furniture_addon.mcpack',
+      'naruto': 'downloads/naruto_addon.mcpack'
+    };
+
+    function goToGetLink() {
+      // Tạo key ngẫu nhiên an toàn trên client
+      const randomKey = "VIP-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-" + Date.now().toString().slice(-4);
+      localStorage.setItem('valid_key_' + addonId, randomKey);
+
+      // Lấy domain hiện tại trên GitHub Pages và trỏ đến getkey.html
+      const currentPath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+      const getKeyPage = currentPath + "getkey.html?key=" + randomKey;
+
+      // NẾU BẠN DÙNG API RÚT GỌN (Ví dụ Link1s / MegaURL):
+      // const apiToken = "TOKEN_CỦA_BẠN";
+      // const shortLink = `https://link1s.com/api?api=${apiToken}&url=${encodeURIComponent(getKeyPage)}`;
+      // window.location.href = shortLink;
+
+      // Mặc định chuyển hướng sang trang getkey để test trực tiếp mượt mà:
+      window.location.href = getKeyPage;
+    }
+
+    function verifyKey() {
+      const userKey = document.getElementById('inputKey').value.trim();
+      const savedKey = localStorage.getItem('valid_key_' + addonId);
+      const errorMsg = document.getElementById('errorMsg');
+
+      if (userKey !== "" && userKey === savedKey) {
+        document.getElementById('authArea').style.display = 'none';
+        document.getElementById('successBox').style.display = 'block';
+        document.getElementById('downloadBtn').href = downloadLinks[addonId] || '#';
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>
