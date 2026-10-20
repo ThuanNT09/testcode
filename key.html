@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Nhận Key Thành Công - TMOD System</title>
+  
+  <!-- Font Google & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: rgba(18, 22, 34, 0.75);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --primary: #00f2fe;
+      --primary-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+      --btn-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #7000ff 100%);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --success: #10b981;
+      --shadow-neon: 0 0 25px rgba(0, 242, 254, 0.35);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+      padding: 20px;
+    }
+
+    /* Background FX */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .ambient-glow {
+      position: fixed;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      filter: blur(130px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-1 { top: -10%; left: 10%; background: #00f2fe; }
+    .glow-2 { bottom: 10%; right: 5%; background: #7000ff; }
+
+    .cyber-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Container Box */
+    .result-card {
+      position: relative;
+      z-index: 2;
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 30px 24px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--btn-gradient);
+    }
+
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.15);
+      border: 2px solid var(--success);
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 16px;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      font-family: 'Orbitron', sans-serif;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    p.sub-text {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
+    /* Key Box Display */
+    .key-display-box {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px dashed rgba(0, 242, 254, 0.4);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 20px;
+      word-break: break-all;
+    }
+
+    .key-label {
+      font-size: 11px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .key-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--primary);
+      text-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+    }
+
+    /* Action Buttons */
+    .btn-action {
+      width: 100%;
+      background: var(--btn-gradient);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-transform: uppercase;
+      box-shadow: 0 10px 24px rgba(0, 242, 254, 0.3);
+      transition: all 0.25s ease;
+      margin-bottom: 12px;
+      text-decoration: none;
+    }
+
+    .btn-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(0, 242, 254, 0.5);
+    }
+
+    .btn-back {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+    .btn-back:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #10b981;
+      color: #000;
+      font-weight: 700;
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+      font-size: 13px;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="fx" class="bg-canvas"></canvas>
+  <div class="cyber-grid"></div>
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <div class="result-card">
+    <div class="success-icon">
+      <i class="fa-solid fa-check"></i>
+    </div>
+    <h1>LẤY KEY THÀNH CÔNG</h1>
+    <p class="sub-text">Mã Key của bạn đã được tạo tự động bên dưới. Hãy sao chép và dán vào Menu trong game để sử dụng.</p>
+
+    <div class="key-display-box">
+      <div class="key-label">Mã Key Của Bạn:</div>
+      <div class="key-value" id="keyValue">Đang tải...</div>
+    </div>
+
+    <button class="btn-action" id="copyBtn">
+      <i class="fa-regular fa-copy"></i> Sao Chép Key Ngay
+    </button>
+    
+    <a href="index.html" class="btn-action btn-back">
+      <i class="fa-solid fa-arrow-left"></i> Quay Lại Trang Chủ
+    </a>
+  </div>
+
+  <div class="toast" id="toast">Đã sao chép Key vào bộ nhớ tạm!</div>
+
+  <script>
+    // Lấy chuỗi tham số từ URL (ví dụ: ?thsjsjsj hoặc tự động sinh chuỗi nếu không có)
+    const urlParams = new URLSearchParams(window.location.search);
+    let keyString = "";
+
+    // Lấy key từ query đầu tiên hoặc từ hash/path tùy ý
+    const queryString = window.location.search.substring(1);
+    
+    if (queryString) {
+      // Nếu user vào dạng getkey.html?thsjsjsj (không có dấu = rõ ràng hoặc có dạng key=xxx)
+      // Lấy toàn bộ phần sau dấu ? hoặc lấy param đầu tiên
+      const firstParam = queryString.split('&')[0];
+      if (firstParam.includes('=')) {
+        keyString = firstParam.split('=')[1];
+      } else {
+        keyString = firstParam;
+      }
+    }
+
+    // Nếu không có tham số trên URL, tự động tạo chuỗi ngẫu nhiên làm ví dụ
+    if (!keyString || keyString.trim() === "") {
+      keyString = "VIP-" + Math.random().toString(36).substring(2, 10).toUpperCase() + "-" + Date.now().toString().slice(-4);
+    }
+
+    // Hiển thị lên màn hình
+    const keyValueEl = document.getElementById('keyValue');
+    keyValueEl.textContent = keyString;
+
+    // Âm thanh click
+    const playClickSound = () => {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+      } catch(e) {}
+    };
+
+    // Chức năng Sao chép
+    const copyBtn = document.getElementById('copyBtn');
+    const toast = document.getElementById('toast');
+
+    copyBtn.addEventListener('click', () => {
+      playClickSound();
+      navigator.clipboard.writeText(keyString).then(() => {
+        toast.classList.add('show');
+        copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Đã Sao Chép!';
+        setTimeout(() => {
+          toast.classList.remove('show');
+          copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Sao Chép Key Ngay';
+        }, 2500);
+      }).catch(err => {
+        alert('Không thể sao chép tự động, vui lòng copy thủ công!');
+      });
+    });
+
+    // Canvas particle effect đơn giản
+    const canvas = document.getElementById('fx');
+    const ctx = canvas.getContext('2d');
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
+    let particles = [];
+
+    for (let i = 0; i < 25; i++) {
+      particles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 1.5 + 0.5,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        a: Math.random() * 0.4 + 0.1
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > w) p.vx *= -1;
+        if (p.y < 0 || p.y > h) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(0, 242, 254, ${p.a})`;
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  </script>
+</body>
+</html>

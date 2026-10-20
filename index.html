@@ -1,0 +1,1626 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Hệ Thống Lấy Key Tự Động</title>
+  
+  <!-- Font Google & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: rgba(18, 22, 34, 0.75);
+      --bg-card-hover: rgba(28, 35, 54, 0.9);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(0, 242, 254, 0.4);
+      --primary: #00f2fe;
+      --primary-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+      --btn-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #7000ff 100%);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --shadow-neon: 0 0 25px rgba(0, 242, 254, 0.35);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      padding-bottom: 60px;
+    }
+
+    /* ===== BACKGROUND FX ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .ambient-glow {
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+      will-change: transform;
+      transform: translateZ(0);
+      contain: paint layout;
+      animation: floatGlow 14s ease-in-out infinite alternate;
+    }
+    .glow-1 { top: -10%; left: 10%; background: #00f2fe; }
+    .glow-2 { bottom: 10%; right: 5%; background: #7000ff; animation-delay: -5s; }
+    .glow-3 { top: 40%; left: 50%; transform: translateX(-50%); background: #ff007a; opacity: 0.12; animation-delay: -9s; }
+
+    @keyframes floatGlow {
+      0% { transform: translateY(0px) scale(1) translateZ(0); }
+      100% { transform: translateY(60px) scale(1.15) translateZ(0); }
+    }
+
+    /* Cyber grid overlay */
+    .cyber-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ===== APP CONTAINER ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 2;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 24px 18px;
+    }
+
+    /* ===== HEADER BAR ===== */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      padding: 14px 22px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #000;
+      box-shadow: var(--shadow-neon);
+      position: relative;
+    }
+
+    .brand-logo::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 14px;
+      background: inherit;
+      filter: blur(8px);
+      opacity: 0.5;
+      z-index: -1;
+    }
+
+    .brand-info h1 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(90deg, #fff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+
+    .brand-info .tagline {
+      font-size: 12px;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 10px var(--success);
+      display: inline-block;
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+      text-decoration: none;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    /* ===== ANNOUNCEMENT BANNER ===== */
+    .notice-bar {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(12px);
+    }
+
+    .notice-icon {
+      color: var(--warning);
+      font-size: 18px;
+      flex-shrink: 0;
+      animation: swing 2s ease infinite;
+    }
+
+    @keyframes swing {
+      0%, 100% { transform: rotate(0deg); }
+      20% { transform: rotate(15deg); }
+      40% { transform: rotate(-10deg); }
+      60% { transform: rotate(5deg); }
+      80% { transform: rotate(-5deg); }
+    }
+
+    .notice-text {
+      font-size: 13px;
+      color: #fde68a;
+      line-height: 1.4;
+      flex-grow: 1;
+    }
+
+    /* ===== MAIN SELECTION CARD ===== */
+    .hero-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 26px 22px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--btn-gradient);
+    }
+
+    /* ===== HERO HEADER BANNER & REAL-TIME CLOCK ===== */
+    .hero-header-banner {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+    }
+
+    .sys-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 1.5px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .neon-main-title {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ffffff;
+      font-family: 'Orbitron', 'Plus Jakarta Sans', sans-serif;
+      text-shadow: 
+        0 0 10px rgba(184, 39, 252, 0.9),
+        0 0 25px rgba(184, 39, 252, 0.7),
+        0 0 45px rgba(255, 0, 122, 0.5);
+      margin-bottom: 14px;
+    }
+
+    .live-clock-card {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: rgba(0, 230, 118, 0.05);
+      border: 1px solid rgba(0, 230, 118, 0.35);
+      border-radius: 8px;
+      padding: 8px 18px;
+      box-shadow: 0 0 15px rgba(0, 230, 118, 0.15);
+    }
+
+    .clock-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .clock-val {
+      font-family: 'Orbitron', monospace;
+      font-size: 15px;
+      font-weight: 900;
+      color: #00E676;
+      letter-spacing: 1.5px;
+      text-shadow: 0 0 10px rgba(0, 230, 118, 0.6);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .title-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-left i {
+      color: var(--primary);
+      font-size: 20px;
+    }
+
+    .title-left h2 {
+      font-size: 19px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .search-box {
+      position: relative;
+      width: 220px;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px 8px 34px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* ===== GAME GRID ===== */
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .game-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+
+    .game-item:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(0, 242, 254, 0.5);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .game-item.active {
+      background: rgba(0, 242, 254, 0.1);
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+    }
+
+    .game-item.active::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      color: var(--primary);
+      font-size: 12px;
+    }
+
+    .game-thumb {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      position: relative;
+      background: #111;
+    }
+
+    .game-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+
+    .game-item:hover .game-thumb img {
+      transform: scale(1.1);
+    }
+
+    .game-details {
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .game-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .game-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-hot {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-active {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-global {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .badge-backup {
+      background: rgba(168, 85, 247, 0.2);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    /* ===== ACTION AREA (GET KEY CTA) ===== */
+    .cta-container {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .selected-summary {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .selected-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid var(--primary);
+      box-shadow: var(--shadow-neon);
+      flex-shrink: 0;
+    }
+
+    .selected-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .selected-text .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .selected-text .name {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-grow: 1;
+      justify-content: flex-end;
+    }
+
+    /* MAIN GET KEY BUTTON */
+    .btn-getkey {
+      background: var(--btn-gradient);
+      background-size: 200% 200%;
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 13px 30px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-transform: uppercase;
+      box-shadow: 0 10px 24px rgba(0, 242, 254, 0.4);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: gradientShift 4s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .btn-getkey:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 14px 30px rgba(0, 242, 254, 0.6);
+    }
+
+    .btn-getkey:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .btn-getkey i {
+      font-size: 17px;
+    }
+
+    .btn-guide {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: var(--radius-md);
+      padding: 13px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+    }
+
+    .btn-guide:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* ===== DUAL ACTION BUTTON ROW ===== */
+    .action-dual-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+
+    .btn-sub-action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      font-family: 'Orbitron', 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 12px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      background: #090d16;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+    }
+
+    .btn-sub-action.btn-yellow {
+      border: 2px solid #FFE500;
+      color: #FFE500;
+      box-shadow: 0 0 10px rgba(255, 229, 0, 0.25);
+    }
+
+    .btn-sub-action.btn-yellow:hover {
+      background: #FFE500;
+      border-color: #FFE500;
+      color: #000000;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 
+        0 0 25px rgba(255, 229, 0, 0.9),
+        0 0 50px rgba(255, 229, 0, 0.45);
+    }
+
+    .btn-sub-action.btn-green {
+      border: 2px solid #00E676;
+      color: #00E676;
+      box-shadow: 0 0 10px rgba(0, 230, 118, 0.25);
+    }
+
+    .btn-sub-action.btn-green:hover {
+      background: #00E676;
+      border-color: #00E676;
+      color: #000000;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 
+        0 0 25px rgba(0, 230, 118, 0.9),
+        0 0 50px rgba(0, 230, 118, 0.45);
+    }
+
+    .btn-sub-action.btn-zalo {
+      border: 2px solid #0084FF;
+      color: #0084FF;
+      box-shadow: 0 0 10px rgba(0, 132, 255, 0.25);
+    }
+
+    .btn-sub-action.btn-zalo:hover {
+      background: #0084FF;
+      border-color: #0084FF;
+      color: #ffffff;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 
+        0 0 25px rgba(0, 132, 255, 0.9),
+        0 0 50px rgba(0, 132, 255, 0.45);
+    }
+
+    .btn-sub-action:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .btn-sub-action i, .btn-sub-action svg {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* ===== VIDEO GUIDE SECTION ===== */
+    .video-guide-section {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 242, 254, 0.15);
+      position: relative;
+    }
+
+    .video-guide-title {
+      text-align: center;
+      font-family: 'Orbitron', 'Plus Jakarta Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 900;
+      color: #00f2fe;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+      text-shadow: 0 0 15px rgba(0, 242, 254, 0.8), 0 0 30px rgba(0, 242, 254, 0.4);
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .video-card {
+      background: rgba(8, 12, 22, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .video-card:hover {
+      border-color: rgba(0, 242, 254, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 242, 254, 0.15);
+    }
+
+    .video-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-family: 'Orbitron', 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      text-align: center;
+    }
+
+    .video-header i {
+      color: var(--primary);
+      font-size: 15px;
+    }
+
+    .video-player-wrapper {
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 9 / 16;
+      background: #000000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    .video-player-wrapper video {
+      width: 100%;
+      height: 100%;
+      max-height: 520px;
+      display: block;
+      outline: none;
+      object-fit: cover;
+      background: #000;
+      border-radius: 11px;
+    }
+
+    .video-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 14px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.25s ease;
+    }
+
+    .video-tab-btn:hover {
+      color: #00f2fe;
+      background: rgba(0, 242, 254, 0.1);
+      border-color: rgba(0, 242, 254, 0.4);
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .video-tab-btn i {
+      font-size: 14px;
+    }
+
+    /* ===== STATS ROW ===== */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .stat-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .stat-blue { background: rgba(0, 242, 254, 0.15); color: var(--primary); }
+    .stat-green { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .stat-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+
+    .stat-info .stat-value {
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .stat-info .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .footer-link {
+      color: var(--text-sub);
+      font-size: 13px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s ease;
+    }
+
+    .footer-link:hover {
+      color: var(--primary);
+    }
+
+    .footer-link.tg-admin {
+      color: #ffe600;
+      font-weight: 700;
+    }
+    .footer-link.tg-admin:hover {
+      color: #fff;
+    }
+
+    /* ===== MODAL POPUP ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: #0d111b;
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      border-radius: var(--radius-lg);
+      max-width: 500px;
+      width: 100%;
+      padding: 26px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), var(--shadow-neon);
+      transform: scale(0.9) translateY(20px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .modal-overlay.active .modal-box {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .modal-close:hover {
+      color: #fff;
+    }
+
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .step-card {
+      display: flex;
+      gap: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      color: #000;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-desc h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+
+    .step-desc p {
+      font-size: 12px;
+      color: var(--text-sub);
+      line-height: 1.4;
+    }
+
+    .modal-footer-btn {
+      width: 100%;
+      background: var(--btn-gradient);
+      border: none;
+      color: #fff;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .app-wrapper {
+        padding: 14px 12px;
+      }
+      .header {
+        padding: 12px 16px;
+      }
+      .brand-info h1 {
+        font-size: 16px;
+      }
+      .game-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+      }
+      .btn-group {
+        width: 100%;
+        flex-direction: column;
+      }
+      .btn-getkey, .btn-guide {
+        width: 100%;
+      }
+      .action-dual-row {
+        grid-template-columns: 1fr;
+      }
+      .search-box {
+        width: 100%;
+      }
+      .title-left {
+        width: 100%;
+      }
+      .video-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .video-player-wrapper {
+        max-width: 100%;
+      }
+      .video-guide-title {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Particle Background -->
+  <canvas id="fx" class="bg-canvas"></canvas>
+  <div class="cyber-grid"></div>
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <div class="app-wrapper">
+
+    <!-- TOP HEADER -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-logo">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div class="brand-info">
+          <h1>GETKEY VIP</h1>
+          <div class="tagline">
+            <span class="status-dot"></span>
+            <span>Hệ Thống Tự Động 24/7</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="https://t.me/thanhbaovn" target="_blank" rel="noopener noreferrer" class="action-btn" style="border-color: rgba(255, 229, 0, 0.4); color: #ffe600;">
+          <i class="fa-brands fa-telegram"></i>
+          <span>Admin</span>
+        </a>
+        <button class="action-btn" id="openGuideBtn">
+          <i class="fa-solid fa-circle-question"></i>
+          <span>Hướng Dẫn</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- NOTIFICATION NOTICE -->
+    <div class="notice-bar">
+      <div class="notice-icon">
+        <i class="fa-solid fa-bullhorn"></i>
+      </div>
+      <div class="notice-text">
+        <strong>Thông báo:</strong> Hệ thống tự động tạo và cấp key tốc độ cao. Chọn game bấm <strong>LẤY KEY NGAY</strong> hoặc bấm các nút liên kết bên dưới!
+      </div>
+    </div>
+
+    <!-- MAIN INTERACTIVE CONTAINER -->
+    <main class="hero-card">
+
+      <!-- HERO BANNER -->
+      <div class="hero-header-banner">
+        <div class="sys-badge">
+          <span class="status-dot"></span>
+          <span>TMOD SYSTEM · ONLINE</span>
+        </div>
+        <h2 class="neon-main-title">LẤY KEY MIỄN PHÍ</h2>
+        <div class="live-clock-card">
+          <span class="clock-label">Hôm nay:</span>
+          <span class="clock-val" id="liveClockVal">--/--/---- --:--:--</span>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <div class="title-left">
+          <i class="fa-solid fa-gamepad"></i>
+          <h2>Danh Sách Game Hỗ Trợ</h2>
+        </div>
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="gameSearch" placeholder="Tìm kiếm tựa game..." autocomplete="off">
+        </div>
+      </div>
+
+      <!-- GAME LIST (CARDS) -->
+      <div class="game-grid" id="gameList">
+
+        <!-- PUBG MOBILE VN -->
+        <div class="game-item active" 
+             data-url="getkey.html" 
+             data-name="PUBG Mobile VN" 
+             data-logo="pubg.jpg">
+          <div class="game-thumb">
+            <img src="pubg.jpg" alt="PUBG Mobile" onerror="this.src='default.jpg'">
+          </div>
+          <div class="game-details">
+            <div class="game-name">PUBG MOBILE</div>
+            <div class="game-meta">
+              <span class="badge badge-active">Bản VNG</span>
+              <span class="badge badge-hot">VIP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIÊN QUÂN MOBILE -->
+        <div class="game-item" 
+             data-url="getkey.html" 
+             data-name="Liên Quân Mobile" 
+             data-logo="lq.jpg">
+          <div class="game-thumb">
+            <img src="lq.jpg" alt="Liên Quân Mobile" onerror="this.src='default.jpg'">
+          </div>
+          <div class="game-details">
+            <div class="game-name">LIÊN QUÂN MOBILE</div>
+            <div class="game-meta">
+              <span class="badge badge-hot">HOT</span>
+              <span class="badge badge-active">Garena AOV</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FC MOBILE -->
+        <div class="game-item" 
+             data-url="getkey.html" 
+             data-name="FC Mobile VN/Global" 
+             data-logo="fcm.jpg">
+          <div class="game-thumb">
+            <img src="fcm.jpg" alt="FC Mobile" onerror="this.src='default.jpg'">
+          </div>
+          <div class="game-details">
+            <div class="game-name">FC MOBILE VN/GLOBAL</div>
+            <div class="game-meta">
+              <span class="badge badge-hot">NEW</span>
+              <span class="badge badge-active">EA Sports</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM ACTION AREA -->
+      <div class="cta-container">
+        <div class="selected-summary">
+          <div class="selected-icon" id="currentLogo">
+            <img src="pubg.jpg" alt="Current Selected Game" onerror="this.src='default.jpg'">
+          </div>
+          <div class="selected-text">
+            <div class="label">Game đang chọn:</div>
+            <div class="name" id="currentName">PUBG Mobile VN</div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn-guide" id="guideBtn2">
+            <i class="fa-solid fa-book-open"></i> Hướng Dẫn
+          </button>
+          <button class="btn-getkey" id="mainGetBtn">
+            <i class="fa-solid fa-key"></i> Lấy Key Free Ngay
+          </button>
+        </div>
+      </div>
+
+      <!-- DUAL BUTTON ROW -->
+      <div class="action-dual-row">
+        <a href="https://t.me/thanhbaovn" target="_blank" rel="noopener noreferrer" class="btn-sub-action btn-yellow">
+          <i class="fa-solid fa-user-secret"></i>
+          <span>MUA KEY (ADMIN)</span>
+        </a>
+        <a href="https://t.me/thanhbaovn" target="_blank" rel="noopener noreferrer" class="btn-sub-action btn-green">
+          <i class="fa-brands fa-android"></i>
+          <span>LINK APK</span>
+        </a>
+        <a href="https://zalo.me/g/" target="_blank" rel="noopener noreferrer" class="btn-sub-action btn-zalo">
+          <svg viewBox="0 0 48 48" style="width:16px;height:16px;fill:currentColor;vertical-align:middle;"><path d="M24 4C12.95 4 4 12.95 4 24c0 3.79 1.07 7.33 2.92 10.35L4.47 42.1a1 1 0 001.27 1.27l7.75-2.45A19.87 19.87 0 0024 44c11.05 0 20-8.95 20-20S35.05 4 24 4zm-4.5 28.5h-5a1 1 0 010-2h3.29l-3.64-5.1A1 1 0 0115 24h5a1 1 0 010 2h-3.29l3.64 5.1a1 1 0 01-.85 1.4zm9.5 0h-5a1 1 0 01-1-1v-8a1 1 0 011-1h5a1 1 0 011 1v8a1 1 0 01-1 1zm-1-2v-6h-3v6h3zm8.5 2h-4a1 1 0 01-1-1v-8a1 1 0 011-1h4a1 1 0 010 2h-3v2h2.5a1 1 0 010 2h-2.5v2h3a1 1 0 010 2z"/></svg>
+          <span>KÊNH CHAT ZALO</span>
+        </a>
+      </div>
+
+    </main>
+
+    <!-- VIDEO TUTORIAL SECTION -->
+    <section class="video-guide-section">
+      <h3 class="video-guide-title">/// HƯỚNG DẪN LẤY KEY MIỄN PHÍ ///</h3>
+      
+      <div class="video-grid">
+        <!-- VIDEO 1: WEB LAYMA -->
+        <div class="video-card">
+          <div class="video-header">
+            <i class="fa-solid fa-circle-play"></i>
+            <span>VIDEO LẤY MÃ WEB LAYMA</span>
+          </div>
+          <div class="video-player-wrapper">
+            <video controls playsinline preload="metadata" poster="default.jpg" id="videoLayma">
+              <source src="HD LAYMA.mp4" type="video/mp4">
+              Trình duyệt của bạn không hỗ trợ phát video HTML5.
+            </video>
+          </div>
+          <a href="HD LAYMA.mp4" target="_blank" rel="noopener noreferrer" class="video-tab-btn" id="linkVideoLayma">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span>Mở video ở tab mới</span>
+          </a>
+        </div>
+
+        <!-- VIDEO 2: WEB ONTOP -->
+        <div class="video-card">
+          <div class="video-header">
+            <i class="fa-solid fa-circle-play"></i>
+            <span>VIDEO LẤY MÃ WEB ONTOP</span>
+          </div>
+          <div class="video-player-wrapper">
+            <video controls playsinline preload="metadata" poster="default.jpg" id="videoOntop">
+              <source src="HD ONTOP.MOV" type="video/mp4">
+              <source src="HD ONTOP.MOV" type="video/quicktime">
+              Trình duyệt của bạn không hỗ trợ phát video HTML5.
+            </video>
+          </div>
+          <a href="HD ONTOP.MOV" target="_blank" rel="noopener noreferrer" class="video-tab-btn" id="linkVideoOntop">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span>Mở video ở tab mới</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS ROW -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon stat-blue">
+          <i class="fa-solid fa-gauge-high"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">~ 3 Giây</div>
+          <div class="stat-label">Tốc Độ Tạo Key</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-green">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">100% An Toàn</div>
+          <div class="stat-label">Bảo Mật & Anti-Ban</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-purple">
+          <i class="fa-solid fa-server"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">Online 24/7</div>
+          <div class="stat-label">Hệ Thống Tự Động</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <p>© 2026 TMOD Game Panel - All Rights Reserved.</p>
+      <div class="footer-links">
+        <a href="https://t.me/thanhbaovn" target="_blank" rel="noopener noreferrer" class="footer-link tg-admin">
+          <i class="fa-brands fa-telegram"></i> Telegram Admin: @ThuanNT
+        </a>
+        <a href="https://t.me/thanhbaovn" target="_blank" rel="noopener noreferrer" class="footer-link" style="color: #00E676; font-weight: 700;">
+          <i class="fa-brands fa-android"></i> Kênh Tải APK
+        </a>
+        <a href="https://zalo.me/g/" target="_blank" rel="noopener noreferrer" class="footer-link" style="color: #0084FF; font-weight: 700;">
+          <i class="fa-solid fa-comments"></i> Kênh Chat Zalo
+        </a>
+        <a href="#" class="footer-link" id="helpLink"><i class="fa-solid fa-shield-cat"></i> Điều Khoản Sử Dụng</a>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- GUIDE MODAL POPUP -->
+  <div class="modal-overlay" id="guideModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-circle-info" style="color:var(--primary)"></i>
+          <span>Hướng Dẫn Lấy Key VIP</span>
+        </div>
+        <button class="modal-close" id="closeModalBtn">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="steps-list">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-desc">
+            <h4>Chọn Tựa Game</h4>
+            <p>Nhấp vào thẻ trò chơi bạn đang chơi trong danh sách hỗ trợ ở trên.</p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-desc">
+            <h4>Bấm "Lấy Key Ngay"</h4>
+            <p>Hệ thống sẽ điều hướng bạn đến trang xác nhận và rút gọn link an toàn.</p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-desc">
+            <h4>Vượt Link & Nhận Key</h4>
+            <p>Làm theo yêu cầu trên trang để nhận mã Key. Sau đó bấm <strong>Sao chép Key</strong> và dán vào Menu trong Game để kích hoạt.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-dual-row" style="margin-bottom: 16px;">
+        <a href="https://t.me/thanhbaovn" target="_blank" rel="noopener noreferrer" class="btn-sub-action btn-yellow" style="font-size: 11px; padding: 10px 6px;">
+          <i class="fa-solid fa-user-secret"></i>
+          <span>MUA KEY ADMIN</span>
+        </a>
+        <a href="https://t.me/thanhbaovn" target="_blank" rel="noopener noreferrer" class="btn-sub-action btn-green" style="font-size: 11px; padding: 10px 6px;">
+          <i class="fa-brands fa-android"></i>
+          <span>LINK APK</span>
+        </a>
+        <a href="https://zalo.me/g/" target="_blank" rel="noopener noreferrer" class="btn-sub-action btn-zalo" style="font-size: 11px; padding: 10px 6px;">
+          <i class="fa-solid fa-comments"></i>
+          <span>CHAT ZALO</span>
+        </a>
+      </div>
+
+      <button class="modal-footer-btn" id="modalConfirmBtn">
+        <i class="fa-solid fa-check"></i> Đã Hiểu & Tiếp Tục
+      </button>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // Audio synthesizer for click sound
+    const playClickSound = () => {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+      } catch(e) {}
+    };
+
+    // State management
+    const gameItems = document.querySelectorAll('.game-item');
+    const currentLogo = document.getElementById('currentLogo');
+    const currentName = document.getElementById('currentName');
+    const mainGetBtn = document.getElementById('mainGetBtn');
+    const gameSearch = document.getElementById('gameSearch');
+
+    // Mặc định lấy URL của game có class active đầu tiên
+    const activeGame = document.querySelector('.game-item.active');
+    let selectedUrl = activeGame ? activeGame.dataset.url.trim() : "";
+
+    // Handle game card selection
+    gameItems.forEach(item => {
+      item.addEventListener('click', () => {
+        playClickSound();
+        gameItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+
+        selectedUrl = item.dataset.url.trim();
+        const name = item.dataset.name;
+        const logo = item.dataset.logo;
+
+        currentName.textContent = name;
+        currentLogo.innerHTML = `<img src="${logo}" alt="${name}" onerror="this.src='default.jpg'">`;
+      });
+    });
+
+    // Handle Get Key Action
+    mainGetBtn.addEventListener('click', () => {
+      playClickSound();
+      if (!selectedUrl) {
+        alert('Vui lòng chọn một tựa game trước!');
+        return;
+      }
+      
+      // Button loading effect
+      mainGetBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang Tạo Link...';
+      mainGetBtn.style.opacity = '0.85';
+      mainGetBtn.style.pointerEvents = 'none';
+
+      setTimeout(() => {
+        window.location.href = selectedUrl;
+      }, 350);
+    });
+
+    // Handle Game Search Filter
+    gameSearch.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      gameItems.forEach(item => {
+        const gameName = item.querySelector('.game-name').textContent.toLowerCase();
+        if (gameName.includes(query)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+
+    // Modal Guide Logic
+    const guideModal = document.getElementById('guideModal');
+    const openGuideBtn = document.getElementById('openGuideBtn');
+    const guideBtn2 = document.getElementById('guideBtn2');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+
+    const openModal = () => {
+      playClickSound();
+      guideModal.classList.add('active');
+    };
+    const closeModal = () => {
+      playClickSound();
+      guideModal.classList.remove('active');
+    };
+
+    openGuideBtn.addEventListener('click', openModal);
+    guideBtn2.addEventListener('click', openModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    modalConfirmBtn.addEventListener('click', closeModal);
+
+    guideModal.addEventListener('click', (e) => {
+      if (e.target === guideModal) closeModal();
+    });
+
+    /* ===== VIDEO AUTO-PAUSE ===== */
+    const videoLayma = document.getElementById('videoLayma');
+    const videoOntop = document.getElementById('videoOntop');
+    if (videoLayma && videoOntop) {
+      videoLayma.addEventListener('play', () => {
+        if (!videoOntop.paused) videoOntop.pause();
+      });
+      videoOntop.addEventListener('play', () => {
+        if (!videoLayma.paused) videoLayma.pause();
+      });
+    }
+
+    /* ===== CANVAS PARTICLE FX ===== */
+    const canvas = document.getElementById('fx');
+    const ctx = canvas.getContext('2d');
+    let w = 0, h = 0, particles = [];
+    let isTabActive = true;
+    let animId = null;
+
+    function initParticles() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+      const count = window.innerWidth < 768 ? 20 : 40;
+      particles = [];
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 1.5 + 0.8,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35,
+          a: Math.random() * 0.45 + 0.15
+        });
+      }
+    }
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(initParticles, 150);
+    });
+    initParticles();
+
+    /* ===== LIVE REAL-TIME CLOCK TICKER ===== */
+    function updateLiveClock() {
+      const now = new Date();
+      const d = String(now.getDate()).padStart(2, '0');
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const y = now.getFullYear();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+
+      const clockEl = document.getElementById('liveClockVal');
+      if (clockEl) {
+        clockEl.textContent = `${d}/${m}/${y} ${hh}:${mm}:${ss}`;
+      }
+    }
+    setInterval(updateLiveClock, 1000);
+    updateLiveClock();
+
+    function draw() {
+      if (!isTabActive) return;
+      ctx.clearRect(0, 0, w, h);
+      const len = particles.length;
+      for (let i = 0; i < len; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > w) p.vx *= -1;
+        if (p.y < 0 || p.y > h) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(0, 242, 254, ${p.a})`;
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      animId = requestAnimationFrame(draw);
+    }
+    draw();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        isTabActive = false;
+        if (animId) cancelAnimationFrame(animId);
+      } else {
+        isTabActive = true;
+        draw();
+      }
+    });
+  </script>
+</body>
+</html>
